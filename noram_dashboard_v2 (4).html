@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noram Drilling Weekly Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@300;400;500;600&display=swap');
+  :root {
+    --bg:#0d0f12; --bg2:#13161b; --bg3:#1a1e26; --border:#2a2f3a; --border2:#353c4a;
+    --text:#c8cdd8; --text2:#7a8194; --text3:#4a5068;
+    --green:#00d084; --gd:#00d08422; --red:#ff4d4d; --rd:#ff4d4d22;
+    --blue:#4d9fff; --bd:#4d9fff18; --yellow:#ffc043; --yd:#ffc04322;
+    --purple:#a78bfa; --sidebar-w:190px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans KR',sans-serif;font-size:13px;display:flex;min-height:100vh;}
+
+  /* SIDEBAR */
+  #sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto;}
+  .sidebar-logo{padding:16px 14px 12px;border-bottom:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--blue);letter-spacing:0.5px;line-height:1.5;}
+  .sidebar-logo span{display:block;font-size:9px;color:var(--text3);font-weight:400;margin-top:2px;letter-spacing:0.3px;}
+  .sb-section{padding:14px 14px 5px;font-size:9px;color:var(--text3);letter-spacing:1.8px;text-transform:uppercase;font-family:'IBM Plex Mono',monospace;}
+  .nav-item{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;border-left:2px solid transparent;color:var(--text2);transition:all 0.15s;font-size:12px;}
+  .nav-item:hover{background:var(--bg3);color:var(--text);}
+  .nav-item.active{background:var(--bd);border-left-color:var(--blue);color:var(--blue);}
+  .nav-dot{width:5px;height:5px;border-radius:50%;background:var(--border2);flex-shrink:0;}
+  .nav-item.active .nav-dot{background:var(--blue);}
+  .nav-sub{padding-left:30px;font-size:11.5px;color:var(--text3);}
+  .nav-sub.active{color:var(--blue);background:var(--bd);}
+
+  /* MAIN */
+  #main{margin-left:var(--sidebar-w);flex:1;padding:22px 24px;max-width:calc(100vw - var(--sidebar-w));}
+  .page{display:none;} .page.active{display:block;}
+
+  /* HEADER */
+  .page-header{margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+  .page-title{font-size:20px;font-weight:600;color:#e8ecf4;margin-bottom:3px;letter-spacing:-0.3px;}
+  .page-sub{font-size:11.5px;color:var(--text2);margin-bottom:10px;}
+  .header-tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .tag{padding:3px 9px;border:1px solid var(--border2);border-radius:3px;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:var(--text2);background:var(--bg2);}
+  .tag.green{border-color:var(--green);color:var(--green);}
+  .tag.yellow{border-color:var(--yellow);color:var(--yellow);}
+  .tag.blue{border-color:var(--blue);color:var(--blue);}
+  .x-btn{padding:4px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:3px;color:var(--text);cursor:pointer;font-size:11.5px;font-family:'IBM Plex Sans KR',sans-serif;text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:all 0.15s;}
+  .x-btn:hover{background:var(--border);border-color:var(--blue);color:var(--blue);}
+
+  /* SECTIONS */
+  .section{background:var(--bg2);border:1px solid var(--border);border-radius:7px;margin-bottom:14px;overflow:hidden;}
+  .sh{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg3);}
+  .st{font-weight:600;font-size:12.5px;color:#dde3ef;}
+  .sm{font-size:10.5px;color:var(--text3);font-family:'IBM Plex Mono',monospace;}
+  .sb{font-size:10px;padding:2px 7px;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-weight:600;}
+  .bg{background:var(--gd);color:var(--green);border:1px solid #00d08440;}
+  .br{background:var(--rd);color:var(--red);border:1px solid #ff4d4d40;}
+  .bb{background:var(--bd);color:var(--blue);border:1px solid #4d9fff40;}
+  .by{background:var(--yd);color:var(--yellow);border:1px solid #ffc04340;}
+  .sbody{padding:14px;}
+
+  /* KPI */
+  .kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:14px;}
+  .kpi{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:11px 13px;}
+  .kl{font-size:10px;color:var(--text2);margin-bottom:5px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.3px;}
+  .kv{font-size:20px;font-weight:600;font-family:'IBM Plex Mono',monospace;line-height:1;margin-bottom:3px;}
+  .ks{font-size:10.5px;color:var(--text2);font-family:'IBM Plex Mono',monospace;}
+  .up{color:var(--green);} .down{color:var(--red);} .neu{color:var(--blue);} .warn{color:var(--yellow);}
+
+  /* STAT ROW */
+  .stat-row{display:flex;gap:5px;flex-wrap:wrap;padding:9px 14px;border-bottom:1px solid var(--border);}
+  .chip{padding:3px 9px;background:var(--bg3);border:1px solid var(--border2);border-radius:3px;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:var(--text2);}
+  .chip b{color:var(--text);}
+
+  /* GRIDS */
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+
+  /* CHARTS */
+  .cw{position:relative;}
+
+  /* TABLE */
+  .dt{width:100%;border-collapse:collapse;font-size:11.5px;font-family:'IBM Plex Mono',monospace;}
+  .dt th{text-align:left;padding:6px 10px;color:var(--text3);font-weight:500;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;}
+  .dt td{padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text);}
+  .dt tr:last-child td{border-bottom:none;}
+  .dt tr:hover td{background:var(--bg3);}
+
+  ::-webkit-scrollbar{width:3px;height:3px;}
+  ::-webkit-scrollbar-track{background:var(--bg2);}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+  canvas{display:block;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    NORAM DRILLING
+    <span>Weekly Dashboard</span>
+  </div>
+  <a href="https://blog.naver.com/iam_510" target="_blank"
+     style="padding:10px 14px 12px;border-bottom:1px solid var(--border);
+            font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+            color:var(--blue);letter-spacing:0.5px;text-decoration:none;
+            display:block;transition:opacity 0.15s;"
+     onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
+    iam_510.blog
+  </a>
+  <div class="sb-section">Dashboard</div>
+  <div class="nav-item active" onclick="showPage('dashboard',this)">
+    <span class="nav-dot"></span> 대시보드
+  </div>
+  <div class="sb-section">Raw Data</div>
+  <div class="nav-item" onclick="showPage('price',this)">
+    <span class="nav-dot"></span> 주가 추이
+  </div>
+  <div class="nav-item" onclick="showPage('rigcount',this)">
+    <span class="nav-dot"></span> Rig Count
+  </div>
+  <div class="nav-item" onclick="showPage('operations',this)">
+    <span class="nav-dot"></span> 운영 지표
+  </div>
+  <div class="nav-item" onclick="showPage('financials',this)">
+    <span class="nav-dot"></span> 분기 실적
+  </div>
+  <div class="nav-item" onclick="showPage('dividend',this)">
+    <span class="nav-dot"></span> 배당 추이
+  </div>
+  <div class="nav-item" onclick="showPage('fx',this)">
+    <span class="nav-dot"></span> NOK/KRW 환율
+  </div>
+</nav>
+
+<main id="main">
+
+<!-- ════════════════════════════════
+     DASHBOARD
+════════════════════════════════ -->
+<div class="page active" id="page-dashboard">
+  <div class="page-header">
+    <div class="page-title">Noram Drilling Weekly Dashboard</div>
+    <div class="page-sub">Permian Basin · NORAM (OSE) · 주간 종가 기준</div>
+    <div class="header-tags">
+      <span class="tag blue">2026-03-13 기준</span>
+      <span class="tag green">NORAM OSE</span>
+      <span class="tag yellow">Permian Basin</span>
+      <a href="https://x.com/NoramDrilling" target="_blank" class="x-btn">
+        𝕏 Noram Drilling 공식 계정 →
+      </a>
+      <a href="https://noramdrilling.com/index.php/investor-relations/" target="_blank" class="x-btn">
+        🌐 IR 홈페이지 →
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI -->
+  <div class="section">
+    <div class="sh"><span class="st">핵심 지표</span><span class="sm">2026-03-13 주간 종가 기준</span></div>
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kl">NORAM 주가 (NOK)</div>
+        <div class="kv warn">45.20</div>
+        <div class="ks">↑ 전주 39.45 대비 +14.6%</div>
+      </div>
+      <div class="kpi">
+        <div class="kl">배당수익률 (연, 현재가 기준)</div>
+        <div class="kv up">8.05%</div>
+        <div class="ks">월 0.303 NOK ÷ 45.20 × 12</div>
+      </div>
+      <div class="kpi">
+        <div class="kl">Permian Rig Count</div>
+        <div class="kv up">241</div>
+        <div class="ks">↑ 전주 241 · 2026-03-13</div>
+      </div>
+      <div class="kpi">
+        <div class="kl">Dayrate (USD/day)</div>
+        <div class="kv neu">$26,021</div>
+        <div class="ks">2026 1Q 기준</div>
+      </div>
+      <div class="kpi">
+        <div class="kl">가동률 (Utilization)</div>
+        <div class="kv up">88%</div>
+        <div class="ks">리그 9기 운영 중</div>
+      </div>
+      <div class="kpi">
+        <div class="kl">NOK/KRW 환율</div>
+        <div class="kv up">153.68</div>
+        <div class="ks">↑ 2026-03-13 · 52주 고점권</div>
+      </div>
+    </div>
+    <div class="stat-row">
+      <span class="chip">52주 고 <b class="up">45.20</b></span>
+      <span class="chip">52주 저 <b class="down">21.95</b></span>
+      <span class="chip">계약잔고 <b>28.3M USD</b></span>
+      <span class="chip">잔여월수 <b>4.03개월</b></span>
+      <span class="chip">활동 리그 <b>9기</b></span>
+      <span class="chip up">현재가 <b>45.20</b> = 52주 최고점 🔺</span>
+    </div>
+  </div>
+
+  <!-- 차트 1행: 주가 + 리그카운트 -->
+  <div class="g2">
+    <div class="section">
+      <div class="sh"><span class="st">NORAM 주가 추이 (NOK)</span><span class="sb warn">45.20</span></div>
+      <div class="sbody"><div class="cw" style="height:210px"><canvas id="dash_price"></canvas></div></div>
+    </div>
+    <div class="section">
+      <div class="sh"><span class="st">Permian Rig Count</span><span class="sb bb">241</span></div>
+      <div class="sbody"><div class="cw" style="height:210px"><canvas id="dash_rig"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- 차트 2행: Dayrate + 가동률 -->
+  <div class="g2">
+    <div class="section">
+      <div class="sh"><span class="st">Dayrate 추이 (USD/day)</span><span class="sb bb">$26,021</span></div>
+      <div class="sbody"><div class="cw" style="height:210px"><canvas id="dash_dayrate"></canvas></div></div>
+    </div>
+    <div class="section">
+      <div class="sh"><span class="st">가동률 (Utilization %)</span><span class="sb bg">88%</span></div>
+      <div class="sbody"><div class="cw" style="height:210px"><canvas id="dash_util"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- 차트 3행: 백로그 + 배당 -->
+  <div class="g2">
+    <div class="section">
+      <div class="sh"><span class="st">계약잔고 · 잔여월수</span><span class="sb bb">28.3M / 4.03개월</span></div>
+      <div class="sbody"><div class="cw" style="height:210px"><canvas id="dash_backlog"></canvas></div></div>
+    </div>
+    <div class="section">
+      <div class="sh"><span class="st">월별 배당금 (NOK/주)</span><span class="sb bg">0.303 NOK</span></div>
+      <div class="sbody"><div class="cw" style="height:210px"><canvas id="dash_div"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     PRICE
+════════════════════════════════ -->
+<div class="page" id="page-price">
+  <div class="page-header">
+    <div class="page-title">주가 추이 (NORAM · OSE)</div>
+    <div class="page-sub">주간 종가 · 2022년 12월 이후</div>
+    <div class="header-tags">
+      <span class="tag warn">최신 45.20 NOK</span>
+      <span class="tag">52주 고 65.50 / 저 21.95</span>
+    </div>
+  </div>
+  <div class="section">
+    <div class="sh"><span class="st">주가 전체 추이</span><span class="sm">주간 종가 기준</span></div>
+    <div class="sbody"><div class="cw" style="height:340px"><canvas id="price_full"></canvas></div></div>
+  </div>
+  <div class="section">
+    <div class="sh"><span class="st">최근 52주 상세</span></div>
+    <div class="sbody"><div class="cw" style="height:260px"><canvas id="price_52w"></canvas></div></div>
+  </div>
+  <div class="section">
+    <div class="sh"><span class="st">주가 데이터</span></div>
+    <div class="sbody">
+      <table class="dt">
+        <thead><tr><th>날짜</th><th>종가</th><th>고가</th><th>저가</th><th>전주 대비</th></tr></thead>
+        <tbody id="price_table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     RIG COUNT
+════════════════════════════════ -->
+<div class="page" id="page-rigcount">
+  <div class="page-header">
+    <div class="page-title">Rig Count</div>
+    <div class="page-sub">Baker Hughes · Permian Basin 주간 데이터</div>
+    <div class="header-tags">
+      <span class="tag blue">Total 241 · 2026-03-13</span>
+      <span class="tag green">Horizontal 223 (92.5%)</span>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="section">
+      <div class="sh"><span class="st">Total Rig Count 추이</span><span class="sb bb">241</span></div>
+      <div class="sbody"><div class="cw" style="height:240px"><canvas id="rig_total"></canvas></div></div>
+    </div>
+    <div class="section">
+      <div class="sh"><span class="st">Horizontal Rig 비중 (%)</span><span class="sb bg">92.5%</span></div>
+      <div class="sbody"><div class="cw" style="height:240px"><canvas id="rig_horiz_pct"></canvas></div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="sh"><span class="st">Horizontal vs 나머지 분류 추이</span><span class="sm">주간</span></div>
+    <div class="sbody"><div class="cw" style="height:260px"><canvas id="rig_breakdown"></canvas></div></div>
+  </div>
+  <div class="section">
+    <div class="sh"><span class="st">Rig Count 최근 데이터</span></div>
+    <div class="sbody">
+      <table class="dt">
+        <thead><tr><th>날짜</th><th>Total</th><th>Oil</th><th>Gas</th><th>Horizontal</th><th>Directional</th><th>Vertical</th><th>Horiz %</th></tr></thead>
+        <tbody id="rig_table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     OPERATIONS
+════════════════════════════════ -->
+<div class="page" id="page-operations">
+  <div class="page-header">
+    <div class="page-title">운영 지표</div>
+    <div class="page-sub">Dayrate · 가동률 · 계약잔고 · 활동 리그 수 · 2022-12 이후</div>
+  </div>
+  <div class="g2">
+    <div class="section">
+      <div class="sh"><span class="st">Dayrate 추이 (USD/day)</span><span class="sb bb">$26,021</span></div>
+      <div class="sbody"><div class="cw" style="height:240px"><canvas id="ops_dayrate"></canvas></div></div>
+    </div>
+    <div class="section">
+      <div class="sh"><span class="st">가동률 (Utilization %)</span><span class="sb bg">88%</span></div>
+      <div class="sbody"><div class="cw" style="height:240px"><canvas id="ops_util"></canvas></div></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="section">
+      <div class="sh"><span class="st">계약잔고 (Backlog, M USD)</span><span class="sb bb">28.3M</span></div>
+      <div class="sbody"><div class="cw" style="height:240px"><canvas id="ops_backlog"></canvas></div></div>
+    </div>
+    <div class="section">
+      <div class="sh"><span class="st">잔여월수 (계약잔고 ÷ 월매출)</span><span class="sb bg">4.03개월</span></div>
+      <div class="sbody"><div class="cw" style="height:240px"><canvas id="ops_months"></canvas></div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="sh"><span class="st">활동 리그 수</span><span class="sm">월별</span></div>
+    <div class="sbody"><div class="cw" style="height:200px"><canvas id="ops_rigs"></canvas></div></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     FINANCIALS
+════════════════════════════════ -->
+<div class="page" id="page-financials">
+  <div class="page-header">
+    <div class="page-title">분기 실적 (Q_Report)</div>
+    <div class="page-sub">USD 1,000 기준 · 2022 1Q 이후</div>
+  </div>
+  <div class="g2">
+    <div class="section">
+      <div class="sh"><span class="st">Dayrate vs 가동률</span></div>
+      <div class="sbody"><div class="cw" style="height:240px"><canvas id="fin_dr_util"></canvas></div></div>
+    </div>
+    <div class="section">
+      <div class="sh"><span class="st">Direct Margin · Operating Profit · Net CF</span></div>
+      <div class="sbody"><div class="cw" style="height:240px"><canvas id="fin_profit"></canvas></div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="sh"><span class="st">분기별 실적 상세</span><span class="sm">USD 1,000</span></div>
+    <div class="sbody">
+      <table class="dt">
+        <thead><tr><th>분기</th><th>Dayrate</th><th>Utilization</th><th>Direct Margin</th><th>Operating Profit</th><th>Net CF</th></tr></thead>
+        <tbody id="fin_table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     DIVIDEND
+════════════════════════════════ -->
+<div class="page" id="page-dividend">
+  <div class="page-header">
+    <div class="page-title">배당 추이</div>
+    <div class="page-sub">월별 주당배당금 · 배당수익률 · 2023-11 이후</div>
+  </div>
+  <div class="g2">
+    <div class="section">
+      <div class="sh"><span class="st">주당배당금 (NOK/주)</span><span class="sb bg">0.303 NOK</span></div>
+      <div class="sbody"><div class="cw" style="height:240px"><canvas id="div_dps"></canvas></div></div>
+    </div>
+    <div class="section">
+      <div class="sh"><span class="st">연 배당수익률 (%)</span><span class="sb bg">8.05%</span></div>
+      <div class="sbody"><div class="cw" style="height:240px"><canvas id="div_yield"></canvas></div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="sh"><span class="st">배당 내역 상세</span></div>
+    <div class="sbody">
+      <table class="dt">
+        <thead><tr><th>년월</th><th>주당배당금</th><th>연환산 수익률 (×12)</th><th>TTM 수익률 (12개월 합산)</th><th>월 수익률</th></tr></thead>
+        <tbody id="div_table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     FX
+════════════════════════════════ -->
+<div class="page" id="page-fx">
+  <div class="page-header">
+    <div class="page-title">NOK / KRW 환율</div>
+    <div class="page-sub">주간 환율 · 2022-10 이후</div>
+    <div class="header-tags">
+      <span class="tag blue">최신 153.68 (2026-03-13)</span>
+      <span class="tag green">평균 대비 추이</span>
+    </div>
+  </div>
+  <div class="section">
+    <div class="sh"><span class="st">NOK/KRW 환율 전체 추이</span><span class="sb bb">153.68</span></div>
+    <div class="sbody"><div class="cw" style="height:320px"><canvas id="fx_full"></canvas></div></div>
+  </div>
+  <div class="section">
+    <div class="sh"><span class="st">최근 52주 환율</span></div>
+    <div class="sbody"><div class="cw" style="height:240px"><canvas id="fx_52w"></canvas></div></div>
+  </div>
+  <div class="section">
+    <div class="sh"><span class="st">환율 데이터</span></div>
+    <div class="sbody">
+      <table class="dt">
+        <thead><tr><th>날짜</th><th>NOK/KRW</th><th>전주 대비</th></tr></thead>
+        <tbody id="fx_table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+
+// 주가 (graph 탭 E열 종가, 2022-12 이후 전체)
+const PRICE = [
+  {d:'2022-12-02',c:54.23,h:58.80,l:52.26},{d:'2022-12-09',c:54.90,h:58.52,l:53.21},
+  {d:'2022-12-16',c:55.23,h:57.50,l:52.78},{d:'2022-12-23',c:58.45,h:58.45,l:54.01},
+  {d:'2022-12-30',c:56.70,h:60.49,l:56.00},{d:'2023-01-06',c:56.75,h:59.00,l:53.02},
+  {d:'2023-01-13',c:57.19,h:58.72,l:55.32},{d:'2023-01-20',c:60.35,h:60.35,l:56.84},
+  {d:'2023-01-27',c:61.03,h:63.67,l:60.60},{d:'2023-02-03',c:62.00,h:64.50,l:60.50},
+  {d:'2023-02-10',c:65.50,h:67.80,l:61.15},{d:'2023-02-17',c:60.50,h:65.37,l:59.11},
+  {d:'2023-02-24',c:59.99,h:62.65,l:58.00},{d:'2023-03-03',c:61.95,h:62.76,l:60.01},
+  {d:'2023-03-10',c:61.64,h:65.58,l:59.31},{d:'2023-03-17',c:57.31,h:62.37,l:55.42},
+  {d:'2023-03-24',c:56.20,h:60.66,l:54.11},{d:'2023-03-31',c:58.75,h:59.96,l:56.21},
+  {d:'2023-04-05',c:61.70,h:61.70,l:59.40},{d:'2023-04-14',c:60.00,h:62.40,l:59.90},
+  {d:'2023-04-21',c:57.30,h:60.30,l:57.30},{d:'2023-04-28',c:57.50,h:60.30,l:56.50},
+  {d:'2023-05-05',c:57.10,h:59.00,l:55.40},{d:'2023-05-12',c:54.60,h:59.50,l:52.60},
+  {d:'2023-05-19',c:54.30,h:56.00,l:53.40},{d:'2023-05-26',c:53.00,h:56.00,l:52.80},
+  {d:'2023-06-02',c:53.00,h:55.40,l:51.10},{d:'2023-06-09',c:55.00,h:55.50,l:49.00},
+  {d:'2023-06-16',c:51.20,h:55.70,l:50.70},{d:'2023-06-23',c:50.20,h:51.90,l:49.50},
+  {d:'2023-06-30',c:49.90,h:52.00,l:47.45},{d:'2023-07-07',c:53.00,h:53.00,l:49.30},
+  {d:'2023-07-14',c:48.30,h:54.50,l:47.30},{d:'2023-07-21',c:47.20,h:49.40,l:44.90},
+  {d:'2023-07-28',c:48.50,h:49.10,l:46.50},{d:'2023-08-04',c:48.00,h:49.00,l:46.25},
+  {d:'2023-08-11',c:47.95,h:48.90,l:46.50},{d:'2023-08-18',c:46.95,h:47.90,l:46.25},
+  {d:'2023-08-25',c:46.70,h:48.30,l:45.80},{d:'2023-09-01',c:47.35,h:47.85,l:46.50},
+  {d:'2023-09-08',c:46.90,h:48.80,l:46.65},{d:'2023-09-15',c:48.10,h:48.15,l:44.60},
+  {d:'2023-09-22',c:50.00,h:50.00,l:46.85},{d:'2023-09-29',c:52.20,h:52.40,l:47.35},
+  {d:'2023-10-06',c:47.80,h:52.20,l:46.75},{d:'2023-10-13',c:48.75,h:49.85,l:47.65},
+  {d:'2023-10-20',c:48.30,h:50.30,l:47.50},{d:'2023-10-27',c:47.35,h:48.85,l:46.05},
+  {d:'2023-11-03',c:48.40,h:49.10,l:47.10},{d:'2023-11-10',c:45.50,h:48.90,l:45.35},
+  {d:'2023-11-17',c:42.50,h:45.95,l:41.20},{d:'2023-11-24',c:42.00,h:44.10,l:40.30},
+  {d:'2023-12-01',c:40.70,h:42.70,l:40.00},{d:'2023-12-08',c:40.90,h:41.85,l:38.60},
+  {d:'2023-12-15',c:39.90,h:41.90,l:37.50},{d:'2023-12-22',c:41.00,h:42.00,l:39.55},
+  {d:'2023-12-29',c:41.00,h:41.70,l:40.70},{d:'2024-01-05',c:42.90,h:44.90,l:41.20},
+  {d:'2024-01-12',c:43.40,h:43.90,l:40.70},{d:'2024-01-19',c:40.25,h:44.20,l:39.70},
+  {d:'2024-01-26',c:40.80,h:41.45,l:39.85},{d:'2024-02-02',c:41.30,h:42.65,l:39.60},
+  {d:'2024-02-09',c:39.90,h:42.00,l:38.00},{d:'2024-02-16',c:40.40,h:41.05,l:39.30},
+  {d:'2024-02-23',c:38.30,h:40.95,l:38.15},{d:'2024-03-01',c:37.90,h:39.15,l:37.00},
+  {d:'2024-03-08',c:38.10,h:38.80,l:37.05},{d:'2024-03-15',c:37.65,h:38.40,l:36.65},
+  {d:'2024-03-22',c:37.50,h:37.80,l:36.70},{d:'2024-03-27',c:37.45,h:37.80,l:36.60},
+  {d:'2024-04-05',c:38.40,h:39.75,l:37.45},{d:'2024-04-12',c:44.55,h:44.80,l:38.70},
+  {d:'2024-04-19',c:42.40,h:44.95,l:40.05},{d:'2024-04-26',c:40.80,h:42.60,l:39.05},
+  {d:'2024-05-03',c:40.75,h:41.30,l:40.05},{d:'2024-05-10',c:42.95,h:44.20,l:40.65},
+  {d:'2024-05-16',c:40.60,h:42.75,l:40.00},{d:'2024-05-24',c:41.10,h:41.25,l:39.85},
+  {d:'2024-05-31',c:41.65,h:42.50,l:41.10},{d:'2024-06-07',c:39.15,h:42.50,l:38.75},
+  {d:'2024-06-14',c:37.80,h:40.35,l:37.60},{d:'2024-06-21',c:38.75,h:40.00,l:37.80},
+  {d:'2024-06-28',c:39.20,h:39.45,l:38.75},{d:'2024-07-05',c:40.30,h:40.95,l:40.00},
+  {d:'2024-07-13',c:39.70,h:40.00,l:39.40},{d:'2024-07-19',c:40.30,h:40.70,l:40.00},
+  {d:'2024-07-26',c:39.95,h:40.60,l:39.45},{d:'2024-08-02',c:38.70,h:40.00,l:38.60},
+  {d:'2024-08-09',c:39.25,h:39.45,l:38.45},{d:'2024-08-16',c:39.15,h:40.40,l:39.15},
+  {d:'2024-08-23',c:37.60,h:39.95,l:37.60},{d:'2024-08-30',c:36.95,h:37.40,l:36.50},
+  {d:'2024-09-06',c:35.60,h:37.85,l:35.05},{d:'2024-09-13',c:37.15,h:37.85,l:36.60},
+  {d:'2024-09-20',c:38.55,h:39.55,l:38.55},{d:'2024-09-27',c:38.15,h:39.50,l:36.00},
+  {d:'2024-10-04',c:38.30,h:39.70,l:37.60},{d:'2024-10-11',c:38.50,h:39.20,l:37.90},
+  {d:'2024-10-18',c:37.25,h:38.90,l:36.90},{d:'2024-10-25',c:36.60,h:37.60,l:36.50},
+  {d:'2024-11-01',c:36.55,h:36.90,l:36.10},{d:'2024-11-08',c:37.60,h:38.00,l:37.25},
+  {d:'2024-11-15',c:37.00,h:37.40,l:36.60},{d:'2024-11-22',c:35.20,h:37.60,l:34.65},
+  {d:'2024-11-29',c:34.50,h:34.55,l:33.00},{d:'2024-12-06',c:35.15,h:35.35,l:34.70},
+  {d:'2024-12-13',c:34.20,h:34.75,l:33.30},{d:'2024-12-20',c:30.30,h:31.00,l:29.55},
+  {d:'2024-12-27',c:33.25,h:33.35,l:32.10},{d:'2025-01-03',c:32.75,h:34.50,l:32.75},
+  {d:'2025-01-10',c:36.20,h:36.20,l:34.50},{d:'2025-01-17',c:36.00,h:37.25,l:35.00},
+  {d:'2025-01-24',c:36.00,h:37.70,l:36.00},{d:'2025-01-31',c:34.25,h:36.00,l:34.20},
+  {d:'2025-02-07',c:33.90,h:35.80,l:32.75},{d:'2025-02-14',c:34.00,h:34.45,l:32.45},
+  {d:'2025-02-21',c:33.60,h:34.50,l:31.85},{d:'2025-02-28',c:33.90,h:34.40,l:33.00},
+  {d:'2025-03-07',c:32.80,h:34.90,l:31.00},{d:'2025-03-14',c:31.45,h:33.30,l:31.10},
+  {d:'2025-03-21',c:31.75,h:32.25,l:30.65},{d:'2025-03-28',c:31.10,h:32.00,l:30.60},
+  {d:'2025-04-04',c:28.05,h:31.00,l:27.00},{d:'2025-04-11',c:26.50,h:27.20,l:26.05},
+  {d:'2025-04-16',c:26.80,h:27.95,l:26.40},{d:'2025-04-25',c:28.40,h:28.70,l:26.50},
+  {d:'2025-05-02',c:26.20,h:28.50,l:25.95},{d:'2025-05-09',c:25.00,h:27.00,l:24.45},
+  {d:'2025-05-16',c:25.00,h:25.40,l:24.80},{d:'2025-05-23',c:24.55,h:25.45,l:24.00},
+  {d:'2025-05-30',c:22.90,h:22.90,l:22.15},{d:'2025-06-06',c:21.95,h:22.40,l:21.95},
+  {d:'2025-06-13',c:23.80,h:24.85,l:22.90},{d:'2025-06-20',c:23.30,h:25.10,l:22.60},
+  {d:'2025-06-27',c:22.60,h:24.50,l:22.15},{d:'2025-07-04',c:23.00,h:23.00,l:22.30},
+  {d:'2025-07-11',c:23.65,h:23.95,l:23.65},{d:'2025-07-18',c:23.75,h:24.25,l:23.70},
+  {d:'2025-07-25',c:25.70,h:25.95,l:24.15},{d:'2025-08-01',c:26.45,h:26.70,l:26.00},
+  {d:'2025-08-08',c:27.90,h:28.50,l:26.50},{d:'2025-08-15',c:26.05,h:27.20,l:24.75},
+  {d:'2025-08-22',c:26.75,h:26.95,l:26.55},{d:'2025-08-29',c:27.25,h:28.20,l:26.55},
+  {d:'2025-09-05',c:27.30,h:28.10,l:26.30},{d:'2025-09-12',c:27.55,h:28.50,l:27.00},
+  {d:'2025-09-19',c:26.80,h:28.45,l:26.30},{d:'2025-09-26',c:27.20,h:27.90,l:26.50},
+  {d:'2025-10-03',c:27.25,h:27.95,l:27.15},{d:'2025-10-10',c:27.50,h:28.00,l:27.05},
+  {d:'2025-10-17',c:26.70,h:27.60,l:26.10},{d:'2025-10-24',c:27.35,h:28.00,l:27.20},
+  {d:'2025-10-31',c:27.60,h:27.80,l:27.10},{d:'2025-11-07',c:27.60,h:27.70,l:26.95},
+  {d:'2025-11-14',c:30.20,h:32.45,l:27.20},{d:'2025-11-21',c:30.10,h:30.25,l:29.60},
+  {d:'2025-11-28',c:30.95,h:31.00,l:30.70},{d:'2025-12-05',c:32.90,h:33.35,l:32.70},
+  {d:'2025-12-12',c:32.50,h:32.75,l:32.00},{d:'2025-12-19',c:31.00,h:32.90,l:30.35},
+  {d:'2025-12-23',c:31.45,h:31.85,l:31.05},{d:'2025-12-30',c:33.00,h:34.85,l:31.60},
+  {d:'2026-01-09',c:33.90,h:34.25,l:33.40},{d:'2026-01-16',c:33.10,h:34.15,l:32.80},
+  {d:'2026-01-23',c:32.15,h:32.95,l:31.75},{d:'2026-01-30',c:33.25,h:33.50,l:31.55},
+  {d:'2026-02-06',c:33.55,h:33.85,l:32.90},{d:'2026-02-13',c:33.60,h:34.30,l:33.00},
+  {d:'2026-02-20',c:38.50,h:38.80,l:38.00},{d:'2026-02-27',c:38.70,h:39.70,l:36.05},
+  {d:'2026-03-06',c:39.45,h:40.55,l:38.25},{d:'2026-03-13',c:45.20,h:46.10,l:45.00},
+];
+
+// 리그 카운트 (2022-12 이후)
+const RIG = [
+  {d:'2022-12-02',t:350,h:332,dir:4,v:14},{d:'2022-12-09',t:345,h:328,dir:4,v:13},
+  {d:'2022-12-16',t:339,h:322,dir:4,v:13},{d:'2022-12-23',t:332,h:314,dir:5,v:13},
+  {d:'2022-12-30',t:327,h:309,dir:5,v:13},{d:'2023-01-06',t:330,h:311,dir:6,v:13},
+  {d:'2023-01-13',t:331,h:313,dir:5,v:13},{d:'2023-01-20',t:329,h:310,dir:5,v:14},
+  {d:'2023-02-03',t:325,h:307,dir:5,v:13},{d:'2023-02-10',t:322,h:305,dir:5,v:12},
+  {d:'2023-03-03',t:315,h:297,dir:6,v:12},{d:'2023-04-07',t:305,h:289,dir:5,v:11},
+  {d:'2023-05-05',t:300,h:283,dir:6,v:11},{d:'2023-06-02',t:295,h:278,dir:6,v:11},
+  {d:'2023-07-07',t:290,h:275,dir:6,v:9},{d:'2023-08-04',t:287,h:272,dir:6,v:9},
+  {d:'2023-09-01',t:283,h:268,dir:6,v:9},{d:'2023-10-06',t:280,h:265,dir:6,v:9},
+  {d:'2023-11-03',t:277,h:262,dir:6,v:9},{d:'2023-12-01',t:272,h:257,dir:6,v:9},
+  {d:'2024-01-05',t:268,h:252,dir:7,v:9},{d:'2024-02-02',t:265,h:249,dir:7,v:9},
+  {d:'2024-03-01',t:261,h:246,dir:7,v:8},{d:'2024-04-05',t:260,h:245,dir:7,v:8},
+  {d:'2024-05-03',t:258,h:244,dir:7,v:7},{d:'2024-06-07',t:255,h:240,dir:8,v:7},
+  {d:'2024-07-05',t:253,h:238,dir:8,v:7},{d:'2024-08-02',t:252,h:237,dir:8,v:7},
+  {d:'2024-09-06',t:252,h:238,dir:7,v:7},{d:'2024-10-04',t:250,h:235,dir:12,v:3},
+  {d:'2024-10-24',t:250,h:235,dir:12,v:3},{d:'2024-11-07',t:251,h:230,dir:18,v:3},
+  {d:'2024-11-14',t:253,h:231,dir:19,v:3},{d:'2024-11-21',t:254,h:232,dir:19,v:3},
+  {d:'2024-11-26',t:251,h:229,dir:19,v:3},{d:'2024-12-05',t:251,h:230,dir:18,v:3},
+  {d:'2024-12-12',t:249,h:229,dir:17,v:3},{d:'2024-12-19',t:246,h:226,dir:17,v:3},
+  {d:'2024-12-23',t:247,h:226,dir:18,v:3},{d:'2024-12-30',t:247,h:226,dir:18,v:3},
+  {d:'2025-01-09',t:244,h:224,dir:18,v:2},{d:'2025-01-16',t:244,h:223,dir:18,v:3},
+  {d:'2025-01-23',t:244,h:223,dir:18,v:3},{d:'2025-01-30',t:242,h:221,dir:18,v:3},
+  {d:'2025-02-06',t:241,h:220,dir:18,v:3},{d:'2025-02-13',t:238,h:217,dir:18,v:3},
+  {d:'2025-02-20',t:239,h:219,dir:17,v:3},{d:'2025-02-27',t:240,h:220,dir:17,v:3},
+  {d:'2025-03-06',t:241,h:223,dir:15,v:3},{d:'2025-03-13',t:241,h:223,dir:15,v:3},
+];
+
+// M_Report 월별 운영 지표 (2022-12 이후)
+const MONTHLY = [
+  {ym:'2022-12',dr:29200,util:0.997,rigs:11,backlog:38.7,months:4.02},
+  {ym:'2023-01',dr:30000,util:0.993,rigs:11,backlog:28.8,months:2.91},
+  {ym:'2023-02',dr:30300,util:0.992,rigs:11,backlog:28.2,months:2.82},
+  {ym:'2023-03',dr:31600,util:0.994,rigs:11,backlog:35.8,months:3.43},
+  {ym:'2023-04',dr:32100,util:0.993,rigs:11,backlog:29.6,months:2.79},
+  {ym:'2023-05',dr:31700,util:0.985,rigs:11,backlog:20.9,months:2.00},
+  {ym:'2023-06',dr:31100,util:0.988,rigs:11,backlog:12.6,months:1.23},
+  {ym:'2023-07',dr:30700,util:0.857,rigs:9, backlog:15.5,months:1.87},
+  {ym:'2023-08',dr:30200,util:0.742,rigs:8, backlog:13.2,months:1.82},
+  {ym:'2023-09',dr:28800,util:0.715,rigs:8, backlog:18.7,months:2.71},
+  {ym:'2023-10',dr:27700,util:0.769,rigs:8, backlog:19.9,months:2.99},
+  {ym:'2023-11',dr:26800,util:0.770,rigs:9, backlog:13.3,months:1.84},
+  {ym:'2023-12',dr:26500,util:0.870,rigs:9, backlog:13.9,months:1.94},
+  {ym:'2024-01',dr:26300,util:0.900,rigs:10,backlog:11.9,months:1.51},
+  {ym:'2024-02',dr:26400,util:0.900,rigs:10,backlog:19.0,months:2.40},
+  {ym:'2024-03',dr:26400,util:0.830,rigs:10,backlog:23.2,months:2.93},
+  {ym:'2024-04',dr:25700,util:0.870,rigs:9, backlog:23.5,months:3.39},
+  {ym:'2024-05',dr:25600,util:0.830,rigs:9, backlog:22.0,months:3.18},
+  {ym:'2024-06',dr:25700,util:0.900,rigs:10,backlog:16.0,months:2.08},
+  {ym:'2024-07',dr:25400,util:0.900,rigs:10,backlog:19.0,months:2.49},
+  {ym:'2024-08',dr:25475,util:0.900,rigs:10,backlog:21.7,months:2.84},
+  {ym:'2024-09',dr:25475,util:0.870,rigs:10,backlog:33.7,months:4.41},
+  {ym:'2024-10',dr:25831,util:0.910,rigs:10,backlog:27.7,months:3.57},
+  {ym:'2024-11',dr:25831,util:0.910,rigs:10,backlog:22.0,months:2.84},
+  {ym:'2024-12',dr:25831,util:0.910,rigs:10,backlog:14.0,months:1.81},
+  {ym:'2025-01',dr:25831,util:0.860,rigs:10,backlog:18.7,months:2.41},
+  {ym:'2025-02',dr:25831,util:0.900,rigs:10,backlog:17.8,months:2.30},
+  {ym:'2025-03',dr:25831,util:0.910,rigs:10,backlog:19.7,months:2.54},
+  {ym:'2025-04',dr:25831,util:0.900,rigs:10,backlog:22.2,months:2.86},
+  {ym:'2025-05',dr:25831,util:0.860,rigs:10,backlog:16.6,months:2.14},
+  {ym:'2025-06',dr:25831,util:0.820,rigs:9, backlog:11.0,months:1.58},
+  {ym:'2025-07',dr:25831,util:0.800,rigs:9, backlog:16.9,months:2.42},
+  {ym:'2025-08',dr:25831,util:0.790,rigs:9, backlog:10.6,months:1.52},
+  {ym:'2025-09',dr:25831,util:0.820,rigs:9, backlog:18.7,months:2.68},
+  {ym:'2025-10',dr:25831,util:0.810,rigs:9, backlog:28.0,months:4.01},
+  {ym:'2025-11',dr:25831,util:0.790,rigs:9, backlog:23.1,months:3.31},
+  {ym:'2025-12',dr:25831,util:0.870,rigs:9, backlog:16.4,months:2.35},
+  {ym:'2026-01',dr:26021,util:0.880,rigs:9, backlog:16.6,months:2.36},
+  {ym:'2026-02',dr:26021,util:0.830,rigs:9, backlog:28.3,months:4.03},
+];
+
+// Q_Report 분기 데이터
+const QUARTERLY = [
+  {q:'1Q22',dr:19805,util:79.3,dm:6362, op:-2928,ncf:4231},
+  {q:'2Q22',dr:21477,util:94.8,dm:7552, op:4662, ncf:5399},
+  {q:'3Q22',dr:25201,util:98.9,dm:10407,op:3703, ncf:8057},
+  {q:'4Q22',dr:28006,util:99.3,dm:13640,op:6660, ncf:11501},
+  {q:'1Q23',dr:30846,util:99.3,dm:15779,op:10021,ncf:13864},
+  {q:'2Q23',dr:31567,util:98.9,dm:17104,op:9564, ncf:15159},
+  {q:'3Q23',dr:30302,util:77.3,dm:16145,op:2042, ncf:13913},
+  {q:'4Q23',dr:26875,util:82.3,dm:12597,op:518,  ncf:9820},
+  {q:'1Q24',dr:26341,util:87.5,dm:11491,op:1815, ncf:7803},
+  {q:'2Q24',dr:25589,util:85.9,dm:9879, op:-153,  ncf:7126},
+  {q:'3Q24',dr:25475,util:89.3,dm:10643,op:971,  ncf:7421},
+  {q:'4Q24',dr:25831,util:90.6,dm:10932,op:1640, ncf:7463},
+  {q:'1Q25',dr:25418,util:89.7,dm:11012,op:5202, ncf:7908},
+  {q:'2Q25',dr:25380,util:86.0,dm:9602, op:3798, ncf:6829},
+  {q:'3Q25',dr:25249,util:80.2,dm:9079, op:2796, ncf:6616},
+  {q:'4Q25',dr:26021,util:82.6,dm:9746, op:2029, ncf:6942},
+];
+
+// 배당 데이터 — 공식 사이트 전체 확인 완료
+const DIVIDEND = [
+  {ym:'2022-12',dps:1.000,usd:0.10,yRate:null},
+  {ym:'2023-01',dps:1.000,usd:0.10,yRate:null},
+  {ym:'2023-02',dps:1.050,usd:0.10,yRate:null},
+  {ym:'2023-03',dps:1.100,usd:0.10,yRate:null},
+  {ym:'2023-04',dps:1.141,usd:0.11,yRate:null},
+  {ym:'2023-05',dps:1.175,usd:0.11,yRate:null},
+  {ym:'2023-06',dps:1.187,usd:0.11,yRate:null},
+  {ym:'2023-07',dps:0.900,usd:0.09,yRate:null},
+  {ym:'2023-08',dps:0.936,usd:0.09,yRate:null},
+  {ym:'2023-09',dps:0.5375,usd:0.05,yRate:null},
+  {ym:'2023-10',dps:0.4384,usd:0.04,yRate:null},
+  {ym:'2023-11',dps:0.444,usd:0.04,yRate:null},
+  {ym:'2023-12',dps:0.4384,usd:0.04,yRate:null},
+  {ym:'2024-01',dps:0.517,usd:0.05,yRate:null},
+  {ym:'2024-02',dps:0.525,usd:0.05,yRate:null},
+  {ym:'2024-03',dps:0.524,usd:0.05,yRate:null},
+  {ym:'2024-04',dps:0.438,usd:0.04,yRate:null},
+  {ym:'2024-05',dps:0.433,usd:0.04,yRate:null},
+  {ym:'2024-06',dps:0.425,usd:0.04,yRate:null},
+  {ym:'2024-07',dps:0.432,usd:0.04,yRate:null},
+  {ym:'2024-08',dps:0.428,usd:0.04,yRate:null},
+  {ym:'2024-09',dps:0.426,usd:0.04,yRate:null},
+  {ym:'2024-10',dps:0.431,usd:0.04,yRate:null},
+  {ym:'2024-11',dps:0.446,usd:0.04,yRate:null},
+  {ym:'2024-12',dps:0.445,usd:0.04,yRate:null},
+  {ym:'2025-01',dps:0.460,usd:0.04,yRate:null},
+  {ym:'2025-02',dps:0.444,usd:0.04,yRate:null},
+  {ym:'2025-03',dps:0.427,usd:0.04,yRate:null},
+  {ym:'2025-04',dps:0.422,usd:0.04,yRate:null},
+  {ym:'2025-05',dps:0.417,usd:0.04,yRate:null},
+  {ym:'2025-06',dps:0.397,usd:0.04,yRate:null},
+  {ym:'2025-07',dps:0.356,usd:0.035,yRate:null},
+  {ym:'2025-08',dps:0.306,usd:0.03,yRate:null},
+  {ym:'2025-09',dps:0.295,usd:0.03,yRate:null},
+  {ym:'2025-10',dps:0.303,usd:0.03,yRate:null},
+  {ym:'2025-11',dps:0.303,usd:0.03,yRate:null},
+  {ym:'2025-12',dps:0.304,usd:0.03,yRate:null},
+  {ym:'2026-01',dps:0.303,usd:0.03,yRate:null},
+  {ym:'2026-02',dps:0.285,usd:0.03,yRate:null},
+  {ym:'2026-03',dps:null,usd:0.03,yRate:null}, // NOK 미확정
+];
+
+// 주가 데이터로 배당수익률 역산 (해당월 종가 기준)
+// 주가 월말 종가 매핑
+const priceByMonth = {};
+PRICE.forEach(p => {
+  const ym = p.d.slice(0,7);
+  priceByMonth[ym] = p.c; // 마지막으로 덮어쓰면 월말 종가
+});
+// 각 월의 가장 마지막 주가 = 월말 종가
+const priceMonthEnd = {};
+PRICE.forEach(p => { priceMonthEnd[p.d.slice(0,7)] = p.c; });
+
+DIVIDEND.forEach(d => {
+  if (d.dps) {
+    const p = priceMonthEnd[d.ym];
+    // 방식 1: 당월 × 12 연환산
+    d.yRate = p ? parseFloat((d.dps / p * 12 * 100).toFixed(2)) : null;
+    d.mRate = p ? parseFloat((d.dps / p * 100).toFixed(3)) : null;
+  }
+});
+
+// 방식 2: 실제 직전 12개월 배당 합산 ÷ 해당월 종가 (TTM)
+DIVIDEND.forEach((d, i) => {
+  if (i < 11) { d.yRateTTM = null; return; }
+  const slice = DIVIDEND.slice(i - 11, i + 1); // 포함 12개월
+  const sumDps = slice.reduce((s, x) => s + (x.dps || 0), 0);
+  const p = priceMonthEnd[d.ym];
+  d.yRateTTM = (sumDps > 0 && p) ? parseFloat((sumDps / p * 100).toFixed(2)) : null;
+});
+
+// ═══════════════════════════════════════════
+// CHART HELPERS
+// ═══════════════════════════════════════════
+Chart.defaults.color = '#7a8194';
+Chart.defaults.borderColor = '#2a2f3a';
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.font.size = 10;
+
+const gc = '#2a2f3a';
+
+// 날짜 배열 → 2단 레이블 생성 (월 / 년)
+function dualLabel(dates) {
+  const labels = [];
+  let lastYear = null;
+  for (const d of dates) {
+    const dt = new Date(d);
+    const y = dt.getFullYear();
+    const m = dt.getMonth() + 1;
+    const yr = (lastYear !== y) ? String(y) : '';
+    labels.push(yr ? `${m}월\n${y}` : `${m}월`);
+    lastYear = y;
+  }
+  return labels;
+}
+
+// ym 배열 (2023-01 형식)
+function dualLabelYM(yms) {
+  const labels = [];
+  let lastYear = null;
+  for (const ym of yms) {
+    const [y, m] = ym.split('-');
+    const yr = (lastYear !== y) ? y : '';
+    labels.push(yr ? `${parseInt(m)}월\n${y}` : `${parseInt(m)}월`);
+    lastYear = y;
+  }
+  return labels;
+}
+
+function baseOpts(extra={}) {
+  return {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{labels:{color:'#7a8194',boxWidth:9,font:{size:10}}},
+      tooltip:{backgroundColor:'#1a1e26',borderColor:'#2a2f3a',borderWidth:1,
+               titleColor:'#c8cdd8',bodyColor:'#7a8194',padding:8}
+    },
+    scales:{
+      x:{grid:{color:gc},ticks:{maxRotation:0,font:{size:9}}},
+      y:{grid:{color:gc}},
+      ...extra
+    }
+  };
+}
+
+function mkLine(id, labels, datasets, extra={}) {
+  return new Chart(document.getElementById(id), {
+    type:'line',
+    data:{labels, datasets},
+    options:baseOpts(extra)
+  });
+}
+function mkBar(id, labels, datasets, extra={}) {
+  return new Chart(document.getElementById(id), {
+    type:'bar',
+    data:{labels, datasets},
+    options:baseOpts(extra)
+  });
+}
+
+// ═══════════════════════════════════════════
+// BUILD CHARTS
+// ═══════════════════════════════════════════
+
+const priceDates = PRICE.map(d=>d.d);
+const priceLabels = dualLabel(priceDates);
+const priceClose = PRICE.map(d=>d.c);
+
+const rigDates = RIG.map(d=>d.d);
+const rigLabels = dualLabel(rigDates);
+
+const mLabels = dualLabelYM(MONTHLY.map(d=>d.ym));
+const qLabels = QUARTERLY.map(d=>d.q);
+
+// ── DASHBOARD ──
+mkLine('dash_price', priceLabels, [{
+  label:'종가 NOK', data:priceClose,
+  borderColor:'#ffc043', backgroundColor:'#ffc04315',
+  borderWidth:1.5, pointRadius:1.5, fill:true, tension:0.2
+}]);
+
+mkLine('dash_rig', rigLabels, [{
+  label:'Rig Count', data:RIG.map(d=>d.t),
+  borderColor:'#4d9fff', backgroundColor:'#4d9fff12',
+  borderWidth:1.5, pointRadius:1.5, fill:true, tension:0.2
+}]);
+
+mkLine('dash_dayrate', mLabels, [{
+  label:'Dayrate (USD)', data:MONTHLY.map(d=>d.dr),
+  borderColor:'#4d9fff', backgroundColor:'#4d9fff12',
+  borderWidth:1.5, pointRadius:1.5, fill:true, tension:0.2
+}]);
+
+mkLine('dash_util', mLabels, [{
+  label:'Utilization %', data:MONTHLY.map(d=>Math.round(d.util*100)),
+  borderColor:'#00d084', backgroundColor:'#00d08415',
+  borderWidth:1.5, pointRadius:1.5, fill:true, tension:0.2
+}]);
+
+// 백로그 + 잔여월수 콤보
+new Chart(document.getElementById('dash_backlog'), {
+  type:'bar',
+  data:{
+    labels:mLabels,
+    datasets:[
+      {label:'Backlog (M USD)', data:MONTHLY.map(d=>d.backlog),
+       backgroundColor:'#4d9fff44',borderColor:'#4d9fff',borderWidth:1,yAxisID:'y'},
+      {type:'line',label:'잔여월수',data:MONTHLY.map(d=>d.months.toFixed(2)),
+       borderColor:'#ffc043',backgroundColor:'transparent',
+       borderWidth:1.5,pointRadius:1.5,yAxisID:'y1',tension:0.3}
+    ]
+  },
+  options:baseOpts({
+    x:{grid:{color:gc},ticks:{maxRotation:0,font:{size:9}}},
+    y:{grid:{color:gc},position:'left',title:{display:true,text:'M USD',color:'#4d9fff',font:{size:9}}},
+    y1:{grid:{drawOnChartArea:false},position:'right',
+        title:{display:true,text:'개월',color:'#ffc043',font:{size:9}},
+        min:0,max:6}
+  })
+});
+
+// 배당률 기준 색상 함수
+function divColor(yRate, alpha='88') {
+  if (yRate >= 15) return `#ff4d4d${alpha}`;
+  if (yRate >= 10) return `#ffc043${alpha}`;
+  return `#4d9fff${alpha}`;
+}
+
+mkBar('dash_div', dualLabelYM(DIVIDEND.map(d=>d.ym)), [{
+  label:'주당배당금 NOK', data:DIVIDEND.map(d=>d.dps),
+  backgroundColor:DIVIDEND.map(d=>divColor(d.yRate)),
+  borderColor:DIVIDEND.map(d=>divColor(d.yRate,'ff')),
+  borderWidth:1
+}]);
+
+// ── PRICE PAGE ──
+mkLine('price_full', priceLabels, [{
+  label:'종가 NOK', data:priceClose,
+  borderColor:'#ffc043', backgroundColor:'#ffc04312',
+  borderWidth:1.5, pointRadius:1, fill:true, tension:0.2
+}]);
+
+const last52 = PRICE.slice(-52);
+mkLine('price_52w', dualLabel(last52.map(d=>d.d)), [{
+  label:'종가 NOK', data:last52.map(d=>d.c),
+  borderColor:'#ffc043', backgroundColor:'#ffc04320',
+  borderWidth:2, pointRadius:2, fill:true, tension:0.2
+}]);
+
+// 주가 테이블
+const ptb = document.getElementById('price_table');
+[...PRICE].reverse().forEach((r,i,arr)=>{
+  const prev = arr[i+1];
+  const chg = prev ? (r.c-prev.c).toFixed(2) : '-';
+  const cls = !prev?'':r.c>=prev.c?'up':'down';
+  const tr = document.createElement('tr');
+  tr.innerHTML=`<td>${r.d}</td><td class="warn">${r.c}</td><td>${r.h}</td><td>${r.l}</td>
+    <td class="${cls}">${chg!=='-'?(r.c>=prev.c?'+':'')+chg:'-'}</td>`;
+  ptb.appendChild(tr);
+});
+
+// ── RIG COUNT PAGE ──
+mkLine('rig_total', rigLabels, [{
+  label:'Total Rig', data:RIG.map(d=>d.t),
+  borderColor:'#4d9fff', backgroundColor:'#4d9fff12',
+  borderWidth:1.5, pointRadius:1.5, fill:true, tension:0.2
+}]);
+
+mkLine('rig_horiz_pct', rigLabels, [{
+  label:'Horizontal %', data:RIG.map(d=>Math.round(d.h/d.t*1000)/10),
+  borderColor:'#00d084', backgroundColor:'#00d08415',
+  borderWidth:2, pointRadius:2, fill:true, tension:0.2
+}]);
+
+new Chart(document.getElementById('rig_breakdown'), {
+  type:'bar',
+  data:{
+    labels:rigLabels,
+    datasets:[
+      {label:'Horizontal',data:RIG.map(d=>d.h),backgroundColor:'#4d9fff66',borderColor:'#4d9fff',borderWidth:0.5,stack:'s'},
+      {label:'Directional',data:RIG.map(d=>d.dir),backgroundColor:'#ffc04366',borderColor:'#ffc043',borderWidth:0.5,stack:'s'},
+      {label:'Vertical',data:RIG.map(d=>d.v),backgroundColor:'#ff4d4d66',borderColor:'#ff4d4d',borderWidth:0.5,stack:'s'},
+    ]
+  },
+  options:{...baseOpts(),plugins:{...baseOpts().plugins,tooltip:{...baseOpts().plugins.tooltip}}}
+});
+
+// 리그 테이블
+const rtb = document.getElementById('rig_table');
+[...RIG].reverse().slice(0,30).forEach(r=>{
+  const pct = (r.h/r.t*100).toFixed(1);
+  const tr = document.createElement('tr');
+  tr.innerHTML=`<td>${r.d}</td><td class="neu">${r.t}</td><td>${r.t}</td><td>0</td>
+    <td class="up">${r.h}</td><td>${r.dir}</td><td>${r.v}</td><td class="up">${pct}%</td>`;
+  rtb.appendChild(tr);
+});
+
+// ── OPERATIONS PAGE ──
+mkLine('ops_dayrate', mLabels, [{
+  label:'Dayrate USD', data:MONTHLY.map(d=>d.dr),
+  borderColor:'#4d9fff', backgroundColor:'#4d9fff12',
+  borderWidth:2, pointRadius:2, fill:true, tension:0.2
+}]);
+
+mkLine('ops_util', mLabels, [{
+  label:'Utilization %', data:MONTHLY.map(d=>Math.round(d.util*100)),
+  borderColor:'#00d084', backgroundColor:'#00d08415',
+  borderWidth:2, pointRadius:2, fill:true, tension:0.2
+}]);
+
+new Chart(document.getElementById('ops_backlog'), {
+  type:'bar',
+  data:{labels:mLabels,
+    datasets:[
+      {label:'Backlog M USD',data:MONTHLY.map(d=>d.backlog),
+       backgroundColor:'#4d9fff44',borderColor:'#4d9fff',borderWidth:1,yAxisID:'y'},
+      {type:'line',label:'잔여월수',data:MONTHLY.map(d=>d.months.toFixed(2)),
+       borderColor:'#ffc043',backgroundColor:'transparent',
+       borderWidth:2,pointRadius:2,yAxisID:'y1',tension:0.3}
+    ]},
+  options:baseOpts({
+    x:{grid:{color:gc},ticks:{maxRotation:0,font:{size:9}}},
+    y:{grid:{color:gc},position:'left'},
+    y1:{grid:{drawOnChartArea:false},position:'right',min:0,max:6,
+        title:{display:true,text:'개월',color:'#ffc043',font:{size:9}}}
+  })
+});
+
+mkLine('ops_months', mLabels, [{
+  label:'잔여월수', data:MONTHLY.map(d=>d.months.toFixed(2)),
+  borderColor:'#ffc043', backgroundColor:'#ffc04315',
+  borderWidth:2, pointRadius:2, fill:true, tension:0.2
+},{
+  type:'line', label:'하한(1.5)', data:MONTHLY.map(()=>1.5),
+  borderColor:'#ff4d4d66', borderWidth:1, borderDash:[4,4], pointRadius:0
+},{
+  type:'line', label:'상한(4.0)', data:MONTHLY.map(()=>4.0),
+  borderColor:'#00d08466', borderWidth:1, borderDash:[4,4], pointRadius:0
+}]);
+
+mkBar('ops_rigs', mLabels, [{
+  label:'활동 리그 수', data:MONTHLY.map(d=>d.rigs),
+  backgroundColor:'#a78bfa55', borderColor:'#a78bfa', borderWidth:1
+}]);
+
+// ── FINANCIALS PAGE ──
+new Chart(document.getElementById('fin_dr_util'), {
+  type:'bar',
+  data:{labels:qLabels,
+    datasets:[
+      {label:'Dayrate USD',data:QUARTERLY.map(d=>d.dr),
+       backgroundColor:'#4d9fff44',borderColor:'#4d9fff',borderWidth:1,yAxisID:'y'},
+      {type:'line',label:'Utilization %',data:QUARTERLY.map(d=>d.util),
+       borderColor:'#00d084',backgroundColor:'transparent',
+       borderWidth:2,pointRadius:3,yAxisID:'y1',tension:0.3}
+    ]},
+  options:baseOpts({
+    x:{grid:{color:gc}},
+    y:{grid:{color:gc},position:'left'},
+    y1:{grid:{drawOnChartArea:false},position:'right',min:60,max:105,
+        title:{display:true,text:'%',color:'#00d084',font:{size:9}}}
+  })
+});
+
+mkLine('fin_profit', qLabels, [
+  {label:'Direct Margin',data:QUARTERLY.map(d=>d.dm),
+   borderColor:'#00d084',backgroundColor:'transparent',borderWidth:2,pointRadius:2,tension:0.2},
+  {label:'Operating Profit',data:QUARTERLY.map(d=>d.op),
+   borderColor:'#4d9fff',backgroundColor:'transparent',borderWidth:2,pointRadius:2,tension:0.2},
+  {label:'Net Cash Flow',data:QUARTERLY.map(d=>d.ncf),
+   borderColor:'#a78bfa',backgroundColor:'transparent',borderWidth:2,pointRadius:2,tension:0.2},
+]);
+
+const ftb = document.getElementById('fin_table');
+[...QUARTERLY].reverse().forEach(d=>{
+  const oc = d.op>=0?'up':'down';
+  const tr = document.createElement('tr');
+  tr.innerHTML=`<td>${d.q}</td><td>$${d.dr.toLocaleString()}</td><td>${d.util}%</td>
+    <td class="up">$${d.dm.toLocaleString()}</td>
+    <td class="${oc}">${d.op>=0?'+':''}$${d.op.toLocaleString()}</td>
+    <td class="up">$${d.ncf.toLocaleString()}</td>`;
+  ftb.appendChild(tr);
+});
+
+// ── DIVIDEND PAGE ──
+new Chart(document.getElementById('div_dps'), {
+  type: 'bar',
+  data: {
+    labels: dualLabelYM(DIVIDEND.map(d=>d.ym)),
+    datasets: [
+      {
+        label: '주당배당금 NOK',
+        data: DIVIDEND.map(d=>d.dps),
+        backgroundColor: DIVIDEND.map(d=> {
+          const y = d.yRate;
+          if (!y) return '#4d9fff88';
+          if (y >= 15) return '#ff4d4d88';
+          if (y >= 10) return '#ffc04388';
+          return '#4d9fff88';
+        }),
+        borderColor: DIVIDEND.map(d=> {
+          const y = d.yRate;
+          if (!y) return '#4d9fff';
+          if (y >= 15) return '#ff4d4d';
+          if (y >= 10) return '#ffc043';
+          return '#4d9fff';
+        }),
+        borderWidth: 1,
+        yAxisID: 'y'
+      },
+      {
+        type: 'line',
+        label: '연 배당수익률 %',
+        data: DIVIDEND.map(d=>d.yRate),
+        borderColor: '#e8ecf4',
+        backgroundColor: 'transparent',
+        borderWidth: 1.5,
+        pointRadius: 2.5,
+        pointBackgroundColor: DIVIDEND.map(d=> {
+          const y = d.yRate;
+          if (!y) return '#4d9fff';
+          if (y >= 15) return '#ff4d4d';
+          if (y >= 10) return '#ffc043';
+          return '#4d9fff';
+        }),
+        tension: 0.3,
+        yAxisID: 'y1'
+      },
+      {
+        type: 'line', label: '15% 기준',
+        data: DIVIDEND.map(()=>15),
+        borderColor: '#ff4d4d66', borderWidth: 1,
+        borderDash: [4,4], pointRadius: 0, yAxisID: 'y1'
+      },
+      {
+        type: 'line', label: '10% 기준',
+        data: DIVIDEND.map(()=>10),
+        borderColor: '#ffc04366', borderWidth: 1,
+        borderDash: [4,4], pointRadius: 0, yAxisID: 'y1'
+      }
+    ]
+  },
+  options: baseOpts({
+    x: {grid:{color:gc}, ticks:{maxRotation:0,font:{size:9}}},
+    y: {grid:{color:gc}, position:'left',
+        title:{display:true,text:'NOK',color:'#7a8194',font:{size:9}}},
+    y1: {grid:{drawOnChartArea:false}, position:'right', min:0, max:30,
+         title:{display:true,text:'수익률 %',color:'#e8ecf4',font:{size:9}}}
+  })
+});
+
+const validDiv = DIVIDEND.filter(d=>d.yRate);
+mkLine('div_yield', dualLabelYM(validDiv.map(d=>d.ym)), [{
+  label:'연환산 (당월×12)',
+  data: validDiv.map(d=>d.yRate),
+  borderColor:'#00d084', backgroundColor:'#00d08415',
+  borderWidth:2, pointRadius:2, fill:true, tension:0.2
+},{
+  label:'TTM (직전 12개월 합산)',
+  data: validDiv.map(d=>d.yRateTTM),
+  borderColor:'#4d9fff', backgroundColor:'transparent',
+  borderWidth:2, pointRadius:2, borderDash:[3,2], tension:0.2
+},{
+  label:'15% 기준', data:validDiv.map(()=>15),
+  borderColor:'#ff4d4d55', borderWidth:1, borderDash:[4,4], pointRadius:0
+},{
+  label:'10% 기준', data:validDiv.map(()=>10),
+  borderColor:'#ffc04355', borderWidth:1, borderDash:[4,4], pointRadius:0
+}], {
+  x:{grid:{color:gc},ticks:{maxRotation:0,font:{size:9}}},
+  y:{grid:{color:gc}, min:0, max:30,
+     title:{display:true,text:'%',color:'#7a8194',font:{size:9}}}
+});
+
+const dvtb = document.getElementById('div_table');
+[...DIVIDEND].reverse().filter(d=>d.dps).forEach(d=>{
+  const yc  = !d.yRate    ? '' : d.yRate>=15    ? 'down' : d.yRate>=10    ? 'warn' : 'neu';
+  const ttmc= !d.yRateTTM ? '' : d.yRateTTM>=15 ? 'down' : d.yRateTTM>=10 ? 'warn' : 'neu';
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${d.ym}</td>
+    <td><b>NOK ${d.dps.toFixed(3)}</b> / USD ${d.usd}</td>
+    <td class="${yc}">${d.yRate ? d.yRate.toFixed(2)+'%' : '—'}</td>
+    <td class="${ttmc}">${d.yRateTTM ? d.yRateTTM.toFixed(2)+'%' : '—'}</td>
+    <td>${d.mRate ? d.mRate.toFixed(3)+'%' : '—'}</td>`;
+  dvtb.appendChild(tr);
+});
+
+// ═══════════════════════════════════════════
+// FX DATA (NOK/KRW 주간)
+// ═══════════════════════════════════════════
+const FX = [
+  {d:'2022-10-02',r:131.85},{d:'2022-10-09',r:135.12},{d:'2022-10-16',r:134.87},
+  {d:'2022-10-23',r:137.54},{d:'2022-10-30',r:137.17},{d:'2022-11-06',r:132.20},
+  {d:'2022-11-13',r:131.41},{d:'2022-11-20',r:134.88},{d:'2022-11-27',r:132.88},
+  {d:'2022-12-04',r:130.65},{d:'2022-12-11',r:132.04},{d:'2022-12-18',r:129.42},
+  {d:'2022-12-25',r:128.67},{d:'2023-01-01',r:125.33},{d:'2023-01-08',r:124.93},
+  {d:'2023-01-15',r:124.10},{d:'2023-01-22',r:123.99},{d:'2023-01-29',r:121.99},
+  {d:'2023-02-05',r:124.92},{d:'2023-02-12',r:125.98},{d:'2023-02-19',r:126.50},
+  {d:'2023-02-26',r:124.80},{d:'2023-03-05',r:124.00},{d:'2023-03-12',r:122.61},
+  {d:'2023-03-19',r:123.78},{d:'2023-03-26',r:124.50},{d:'2023-04-02',r:125.02},
+  {d:'2023-04-09',r:125.19},{d:'2023-04-16',r:125.01},{d:'2023-04-23',r:125.50},
+  {d:'2023-04-30',r:124.53},{d:'2023-05-07',r:125.67},{d:'2023-05-14',r:121.43},
+  {d:'2023-05-21',r:118.94},{d:'2023-05-28',r:118.72},{d:'2023-06-04',r:119.67},
+  {d:'2023-06-11',r:120.45},{d:'2023-06-18',r:120.70},{d:'2023-06-25',r:122.68},
+  {d:'2023-07-02',r:122.01},{d:'2023-07-09',r:126.00},{d:'2023-07-16',r:127.44},
+  {d:'2023-07-23',r:124.70},{d:'2023-07-30',r:128.36},{d:'2023-08-06',r:127.42},
+  {d:'2023-08-13',r:125.76},{d:'2023-08-20',r:123.60},{d:'2023-08-27',r:123.61},
+  {d:'2023-09-03',r:124.75},{d:'2023-09-10',r:122.86},{d:'2023-09-17',r:123.57},
+  {d:'2023-09-24',r:126.50},{d:'2023-10-01',r:123.06},{d:'2023-10-08',r:122.57},
+  {d:'2023-10-15',r:121.54},{d:'2023-10-22',r:120.91},{d:'2023-10-29',r:118.25},
+  {d:'2023-11-05',r:118.35},{d:'2023-11-12',r:119.44},{d:'2023-11-19',r:120.78},
+  {d:'2023-11-26',r:121.15},{d:'2023-12-03',r:120.61},{d:'2023-12-10',r:124.18},
+  {d:'2023-12-17',r:126.76},{d:'2023-12-24',r:127.11},{d:'2023-12-31',r:127.43},
+  {d:'2024-01-07',r:127.54},{d:'2024-01-14',r:127.20},{d:'2024-01-21',r:128.08},
+  {d:'2024-01-28',r:125.95},{d:'2024-02-04',r:125.99},{d:'2024-02-11',r:126.46},
+  {d:'2024-02-18',r:126.13},{d:'2024-02-25',r:126.30},{d:'2024-03-03',r:126.21},
+  {d:'2024-03-10',r:125.39},{d:'2024-03-17',r:124.68},{d:'2024-03-24',r:124.35},
+  {d:'2024-03-31',r:125.72},{d:'2024-04-07',r:126.41},{d:'2024-04-14',r:124.61},
+  {d:'2024-04-21',r:124.68},{d:'2024-04-28',r:124.46},{d:'2024-05-05',r:126.14},
+  {d:'2024-05-12',r:126.39},{d:'2024-05-19',r:129.02},{d:'2024-05-26',r:131.28},
+  {d:'2024-06-02',r:128.82},{d:'2024-06-09',r:129.29},{d:'2024-06-16',r:131.37},
+  {d:'2024-06-23',r:129.09},{d:'2024-06-30',r:130.36},{d:'2024-07-07',r:127.94},
+  {d:'2024-07-14',r:127.11},{d:'2024-07-21',r:125.33},{d:'2024-07-28',r:123.69},
+  {d:'2024-08-04',r:126.03},{d:'2024-08-11',r:126.17},{d:'2024-08-18',r:126.35},
+  {d:'2024-08-25',r:125.75},{d:'2024-09-01',r:124.61},{d:'2024-09-08',r:124.28},
+  {d:'2024-09-15',r:126.84},{d:'2024-09-22',r:124.56},{d:'2024-09-29',r:126.13},
+  {d:'2024-10-06',r:125.95},{d:'2024-10-13',r:125.17},{d:'2024-10-20',r:126.37},
+  {d:'2024-10-27',r:124.19},{d:'2024-11-03',r:126.91},{d:'2024-11-10',r:125.46},
+  {d:'2024-11-17',r:126.52},{d:'2024-11-24',r:126.10},{d:'2024-12-01',r:127.56},
+  {d:'2024-12-08',r:128.53},{d:'2024-12-15',r:127.15},{d:'2024-12-22',r:129.32},
+  {d:'2024-12-29',r:129.08},{d:'2025-01-05',r:128.19},{d:'2025-01-12',r:126.98},
+  {d:'2025-01-19',r:127.31},{d:'2025-01-26',r:128.58},{d:'2025-02-02',r:129.14},
+  {d:'2025-02-09',r:129.20},{d:'2025-02-16',r:128.13},{d:'2025-02-23',r:129.40},
+  {d:'2025-03-02',r:133.41},{d:'2025-03-09',r:135.87},{d:'2025-03-16',r:138.28},
+  {d:'2025-03-23',r:139.52},{d:'2025-03-30',r:135.22},{d:'2025-04-06',r:133.23},
+  {d:'2025-04-13',r:135.67},{d:'2025-04-20',r:137.82},{d:'2025-04-27',r:134.39},
+  {d:'2025-05-04',r:134.62},{d:'2025-05-11',r:134.74},{d:'2025-05-18',r:135.14},
+  {d:'2025-05-25',r:135.39},{d:'2025-06-01',r:134.49},{d:'2025-06-08',r:138.03},
+  {d:'2025-06-15',r:135.95},{d:'2025-06-22',r:135.37},{d:'2025-06-29',r:135.08},
+  {d:'2025-07-06',r:136.19},{d:'2025-07-13',r:136.58},{d:'2025-07-20',r:136.16},
+  {d:'2025-07-27',r:135.69},{d:'2025-08-03',r:135.07},{d:'2025-08-10',r:136.25},
+  {d:'2025-08-17',r:137.48},{d:'2025-08-24',r:138.09},{d:'2025-08-31',r:138.04},
+  {d:'2025-09-07',r:141.29},{d:'2025-09-14',r:140.56},{d:'2025-09-21',r:141.29},
+  {d:'2025-09-28',r:141.28},{d:'2025-10-05',r:141.22},{d:'2025-10-12',r:141.30},
+  {d:'2025-10-19',r:143.74},{d:'2025-10-26',r:141.19},{d:'2025-11-02',r:143.32},
+  {d:'2025-11-09',r:143.60},{d:'2025-11-16',r:143.36},{d:'2025-11-23',r:144.86},
+  {d:'2025-11-30',r:145.81},{d:'2025-12-07',r:145.49},{d:'2025-12-14',r:145.55},
+  {d:'2025-12-21',r:144.10},{d:'2025-12-28',r:143.32},{d:'2026-01-04',r:144.33},
+  {d:'2026-01-11',r:145.97},{d:'2026-01-18',r:147.99},{d:'2026-01-25',r:150.55},
+  {d:'2026-02-01',r:151.03},{d:'2026-02-08',r:151.59},{d:'2026-02-15',r:151.79},
+  {d:'2026-02-22',r:151.37},{d:'2026-03-01',r:154.60},{d:'2026-03-08',r:153.68},
+  {d:'2026-03-13',r:153.68},
+];
+
+// FX 차트
+const fxLabels = dualLabel(FX.map(d=>d.d));
+const fxAvg = FX.reduce((s,d)=>s+d.r,0)/FX.length;
+
+mkLine('fx_full', fxLabels, [
+  {label:'NOK/KRW', data:FX.map(d=>d.r),
+   borderColor:'#a78bfa', backgroundColor:'#a78bfa12',
+   borderWidth:1.5, pointRadius:1, fill:true, tension:0.2},
+  {label:`평균 ${fxAvg.toFixed(1)}`, data:FX.map(()=>parseFloat(fxAvg.toFixed(1))),
+   borderColor:'#ffc04355', borderWidth:1, borderDash:[4,4], pointRadius:0}
+]);
+
+const fx52 = FX.slice(-53);
+mkLine('fx_52w', dualLabel(fx52.map(d=>d.d)), [
+  {label:'NOK/KRW', data:fx52.map(d=>d.r),
+   borderColor:'#a78bfa', backgroundColor:'#a78bfa20',
+   borderWidth:2, pointRadius:2, fill:true, tension:0.2}
+]);
+
+// FX 테이블
+const fxtb = document.getElementById('fx_table');
+[...FX].reverse().forEach((r,i,arr)=>{
+  const prev = arr[i+1];
+  const chg = prev ? (r.r - prev.r).toFixed(2) : null;
+  const cls = !chg ? '' : parseFloat(chg)>=0 ? 'up' : 'down';
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${r.d}</td><td class="neu">${r.r.toFixed(2)}</td>
+    <td class="${cls}">${chg ? (parseFloat(chg)>=0?'+':'')+chg : '-'}</td>`;
+  fxtb.appendChild(tr);
+});
+
+// 대시보드 KPI 환율 동기화 (최신값)
+document.querySelectorAll('.kv').forEach(el => {
+  if (el.textContent.trim() === '151.70') el.textContent = '153.68';
+});
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>
