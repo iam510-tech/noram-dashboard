@@ -17,8 +17,8 @@
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans KR',sans-serif;font-size:13px;display:flex;min-height:100vh;}
 
-  /* SIDEBAR */
-  #sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto;}
+  /* ── SIDEBAR ── */
+  #sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:200;overflow-y:auto;transition:transform 0.25s ease;}
   .sidebar-logo{padding:16px 14px 12px;border-bottom:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--blue);letter-spacing:0.5px;line-height:1.5;}
   .sidebar-logo span{display:block;font-size:9px;color:var(--text3);font-weight:400;margin-top:2px;letter-spacing:0.3px;}
   .sb-section{padding:14px 14px 5px;font-size:9px;color:var(--text3);letter-spacing:1.8px;text-transform:uppercase;font-family:'IBM Plex Mono',monospace;}
@@ -27,14 +27,21 @@
   .nav-item.active{background:var(--bd);border-left-color:var(--blue);color:var(--blue);}
   .nav-dot{width:5px;height:5px;border-radius:50%;background:var(--border2);flex-shrink:0;}
   .nav-item.active .nav-dot{background:var(--blue);}
-  .nav-sub{padding-left:30px;font-size:11.5px;color:var(--text3);}
-  .nav-sub.active{color:var(--blue);background:var(--bd);}
 
-  /* MAIN */
-  #main{margin-left:var(--sidebar-w);flex:1;padding:22px 24px;max-width:calc(100vw - var(--sidebar-w));}
+  /* ── OVERLAY (모바일 사이드바 열릴 때 배경) ── */
+  #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:150;}
+  #overlay.show{display:block;}
+
+  /* ── MOBILE TOPBAR ── */
+  #topbar{display:none;position:fixed;top:0;left:0;right:0;height:48px;background:var(--bg2);border-bottom:1px solid var(--border);z-index:100;align-items:center;padding:0 14px;gap:12px;}
+  #topbar .tb-title{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--blue);flex:1;}
+  #hamburger{background:none;border:none;color:var(--text);cursor:pointer;font-size:20px;padding:4px 6px;line-height:1;}
+
+  /* ── MAIN ── */
+  #main{margin-left:var(--sidebar-w);flex:1;padding:22px 24px;max-width:calc(100vw - var(--sidebar-w));overflow-x:hidden;}
   .page{display:none;} .page.active{display:block;}
 
-  /* HEADER */
+  /* ── HEADER ── */
   .page-header{margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border);}
   .page-title{font-size:20px;font-weight:600;color:#e8ecf4;margin-bottom:3px;letter-spacing:-0.3px;}
   .page-sub{font-size:11.5px;color:var(--text2);margin-bottom:10px;}
@@ -46,7 +53,7 @@
   .x-btn{padding:4px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:3px;color:var(--text);cursor:pointer;font-size:11.5px;font-family:'IBM Plex Sans KR',sans-serif;text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:all 0.15s;}
   .x-btn:hover{background:var(--border);border-color:var(--blue);color:var(--blue);}
 
-  /* SECTIONS */
+  /* ── SECTIONS ── */
   .section{background:var(--bg2);border:1px solid var(--border);border-radius:7px;margin-bottom:14px;overflow:hidden;}
   .sh{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg3);}
   .st{font-weight:600;font-size:12.5px;color:#dde3ef;}
@@ -58,7 +65,7 @@
   .by{background:var(--yd);color:var(--yellow);border:1px solid #ffc04340;}
   .sbody{padding:14px;}
 
-  /* KPI */
+  /* ── KPI ── */
   .kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:14px;}
   .kpi{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:11px 13px;}
   .kl{font-size:10px;color:var(--text2);margin-bottom:5px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.3px;}
@@ -66,22 +73,23 @@
   .ks{font-size:10.5px;color:var(--text2);font-family:'IBM Plex Mono',monospace;}
   .up{color:var(--green);} .down{color:var(--red);} .neu{color:var(--blue);} .warn{color:var(--yellow);}
 
-  /* STAT ROW */
+  /* ── STAT ROW ── */
   .stat-row{display:flex;gap:5px;flex-wrap:wrap;padding:9px 14px;border-bottom:1px solid var(--border);}
   .chip{padding:3px 9px;background:var(--bg3);border:1px solid var(--border2);border-radius:3px;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:var(--text2);}
   .chip b{color:var(--text);}
 
-  /* GRIDS */
+  /* ── GRIDS ── */
   .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
   .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
 
-  /* CHARTS */
+  /* ── CHARTS ── */
   .cw{position:relative;}
 
-  /* TABLE */
-  .dt{width:100%;border-collapse:collapse;font-size:11.5px;font-family:'IBM Plex Mono',monospace;}
-  .dt th{text-align:left;padding:6px 10px;color:var(--text3);font-weight:500;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;}
-  .dt td{padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text);}
+  /* ── TABLE (가로 스크롤) ── */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .dt{width:100%;border-collapse:collapse;font-size:11.5px;font-family:'IBM Plex Mono',monospace;min-width:420px;}
+  .dt th{text-align:left;padding:6px 10px;color:var(--text3);font-weight:500;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;}
+  .dt td{padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;}
   .dt tr:last-child td{border-bottom:none;}
   .dt tr:hover td{background:var(--bg3);}
 
@@ -89,9 +97,68 @@
   ::-webkit-scrollbar-track{background:var(--bg2);}
   ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
   canvas{display:block;}
+
+  /* ════════════════════════════
+     MOBILE  (≤ 768px)
+  ════════════════════════════ */
+  @media (max-width:768px){
+    /* 사이드바 슬라이드 아웃 */
+    #sidebar{transform:translateX(-100%);}
+    #sidebar.open{transform:translateX(0);}
+
+    /* 상단 바 표시 */
+    #topbar{display:flex;}
+
+    /* 메인 영역 전체 너비 */
+    #main{margin-left:0;padding:64px 12px 24px;max-width:100vw;}
+
+    /* 페이지 타이틀 */
+    .page-title{font-size:16px;}
+    .page-sub{font-size:11px;}
+
+    /* KPI: 2열 */
+    .kpi-grid{grid-template-columns:repeat(2,1fr);gap:8px;padding:10px;}
+    .kv{font-size:18px;}
+    .kl{font-size:9.5px;}
+    .ks{font-size:9.5px;}
+
+    /* 2열 그리드 → 1열 */
+    .g2,.g3{grid-template-columns:1fr;}
+
+    /* 차트 높이 모바일 최적화 */
+    .cw[style*="210px"]{height:180px!important;}
+    .cw[style*="240px"]{height:200px!important;}
+    .cw[style*="260px"]{height:210px!important;}
+    .cw[style*="280px"]{height:220px!important;}
+    .cw[style*="300px"]{height:220px!important;}
+    .cw[style*="320px"]{height:240px!important;}
+    .cw[style*="340px"]{height:240px!important;}
+
+    /* 헤더 태그 작게 */
+    .tag,.x-btn{font-size:10px;padding:2px 7px;}
+
+    /* stat-row 칩 작게 */
+    .chip{font-size:9.5px;padding:2px 7px;}
+
+    /* 섹션 패딩 */
+    .sbody{padding:10px;}
+    .sh{padding:8px 12px;}
+  }
+
+  @media (max-width:400px){
+    .kpi-grid{grid-template-columns:1fr 1fr;}
+    .kv{font-size:16px;}
+  }
 </style>
 </head>
 <body>
+
+<div id="overlay" onclick="closeSidebar()"></div>
+
+<div id="topbar">
+  <button id="hamburger" onclick="toggleSidebar()">☰</button>
+  <span class="tb-title">NORAM DRILLING</span>
+</div>
 
 <!-- SIDEBAR -->
 <nav id="sidebar">
@@ -259,10 +326,10 @@
   <div class="section">
     <div class="sh"><span class="st">주가 데이터</span></div>
     <div class="sbody">
-      <table class="dt">
+      <div class="tbl-wrap"><table class="dt">
         <thead><tr><th>날짜</th><th>종가</th><th>고가</th><th>저가</th><th>전주 대비</th></tr></thead>
         <tbody id="price_table"></tbody>
-      </table>
+      </table></div>
     </div>
   </div>
 </div>
@@ -296,10 +363,10 @@
   <div class="section">
     <div class="sh"><span class="st">Rig Count 최근 데이터</span></div>
     <div class="sbody">
-      <table class="dt">
+      <div class="tbl-wrap"><table class="dt">
         <thead><tr><th>날짜</th><th>Total</th><th>Oil</th><th>Gas</th><th>Horizontal</th><th>Directional</th><th>Vertical</th><th>Horiz %</th></tr></thead>
         <tbody id="rig_table"></tbody>
-      </table>
+      </table></div>
     </div>
   </div>
 </div>
@@ -359,10 +426,10 @@
   <div class="section">
     <div class="sh"><span class="st">분기별 실적 상세</span><span class="sm">USD 1,000</span></div>
     <div class="sbody">
-      <table class="dt">
+      <div class="tbl-wrap"><table class="dt">
         <thead><tr><th>분기</th><th>Dayrate</th><th>Utilization</th><th>Direct Margin</th><th>Operating Profit</th><th>Net CF</th></tr></thead>
         <tbody id="fin_table"></tbody>
-      </table>
+      </table></div>
     </div>
   </div>
 </div>
@@ -388,10 +455,10 @@
   <div class="section">
     <div class="sh"><span class="st">배당 내역 상세</span></div>
     <div class="sbody">
-      <table class="dt">
+      <div class="tbl-wrap"><table class="dt">
         <thead><tr><th>년월</th><th>주당배당금</th><th>연환산 수익률 (×12)</th><th>TTM 수익률 (12개월 합산)</th><th>월 수익률</th></tr></thead>
         <tbody id="div_table"></tbody>
-      </table>
+      </table></div>
     </div>
   </div>
 </div>
@@ -419,10 +486,10 @@
   <div class="section">
     <div class="sh"><span class="st">환율 데이터</span></div>
     <div class="sbody">
-      <table class="dt">
+      <div class="tbl-wrap"><table class="dt">
         <thead><tr><th>날짜</th><th>NOK/KRW</th><th>전주 대비</th></tr></thead>
         <tbody id="fx_table"></tbody>
-      </table>
+      </table></div>
     </div>
   </div>
 </div>
@@ -821,6 +888,7 @@ new Chart(document.getElementById('dash_backlog'), {
 
 // 배당률 기준 색상 함수
 function divColor(yRate, alpha='88') {
+  if (!yRate) return `#4d9fff${alpha}`;
   if (yRate >= 15) return `#ff4d4d${alpha}`;
   if (yRate >= 10) return `#ffc043${alpha}`;
   return `#4d9fff${alpha}`;
@@ -828,8 +896,8 @@ function divColor(yRate, alpha='88') {
 
 mkBar('dash_div', dualLabelYM(DIVIDEND.map(d=>d.ym)), [{
   label:'주당배당금 NOK', data:DIVIDEND.map(d=>d.dps),
-  backgroundColor:DIVIDEND.map(d=>divColor(d.yRate)),
-  borderColor:DIVIDEND.map(d=>divColor(d.yRate,'ff')),
+  backgroundColor:'#00d08466',
+  borderColor:'#00d084',
   borderWidth:1
 }]);
 
@@ -991,20 +1059,8 @@ new Chart(document.getElementById('div_dps'), {
       {
         label: '주당배당금 NOK',
         data: DIVIDEND.map(d=>d.dps),
-        backgroundColor: DIVIDEND.map(d=> {
-          const y = d.yRate;
-          if (!y) return '#4d9fff88';
-          if (y >= 15) return '#ff4d4d88';
-          if (y >= 10) return '#ffc04388';
-          return '#4d9fff88';
-        }),
-        borderColor: DIVIDEND.map(d=> {
-          const y = d.yRate;
-          if (!y) return '#4d9fff';
-          if (y >= 15) return '#ff4d4d';
-          if (y >= 10) return '#ffc043';
-          return '#4d9fff';
-        }),
+        backgroundColor: '#00d08466',
+        borderColor: '#00d084',
         borderWidth: 1,
         yAxisID: 'y'
       },
@@ -1018,7 +1074,7 @@ new Chart(document.getElementById('div_dps'), {
         pointRadius: 2.5,
         pointBackgroundColor: DIVIDEND.map(d=> {
           const y = d.yRate;
-          if (!y) return '#4d9fff';
+          if (!y) return '#7a8194';
           if (y >= 15) return '#ff4d4d';
           if (y >= 10) return '#ffc043';
           return '#4d9fff';
@@ -1191,11 +1247,20 @@ document.querySelectorAll('.kv').forEach(el => {
 // ═══════════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════════
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
 function showPage(id, el) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   el.classList.add('active');
+  closeSidebar();
 }
 </script>
 </body>
