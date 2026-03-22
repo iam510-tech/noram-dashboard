@@ -209,7 +209,7 @@
     <div class="page-title">Noram Drilling Weekly Dashboard</div>
     <div class="page-sub">Permian Basin · NORAM (OSE) · 주간 종가 기준</div>
     <div class="header-tags">
-      <span class="tag blue">2026-03-13 기준</span>
+      <span class="tag blue" id="kpi-date-tag">로딩중...</span>
       <span class="tag green">NORAM OSE</span>
       <span class="tag yellow">Permian Basin</span>
       <a href="https://x.com/NoramDrilling" target="_blank" class="x-btn">
@@ -221,59 +221,21 @@
     </div>
   </div>
 
-  <!-- KPI -->
-  <div class="section">
-    <div class="sh"><span class="st">핵심 지표</span><span class="sm">2026-03-13 주간 종가 기준</span></div>
-    <div class="kpi-grid">
-      <div class="kpi">
-        <div class="kl">NORAM 주가 (NOK)</div>
-        <div class="kv warn">45.20</div>
-        <div class="ks">↑ 전주 39.45 대비 +14.6%</div>
-      </div>
-      <div class="kpi">
-        <div class="kl">배당수익률 (연, 현재가 기준)</div>
-        <div class="kv up">8.05%</div>
-        <div class="ks">월 0.303 NOK ÷ 45.20 × 12</div>
-      </div>
-      <div class="kpi">
-        <div class="kl">Permian Rig Count</div>
-        <div class="kv up">241</div>
-        <div class="ks">↑ 전주 241 · 2026-03-13</div>
-      </div>
-      <div class="kpi">
-        <div class="kl">Dayrate (USD/day)</div>
-        <div class="kv neu">$26,021</div>
-        <div class="ks">2026 1Q 기준</div>
-      </div>
-      <div class="kpi">
-        <div class="kl">가동률 (Utilization)</div>
-        <div class="kv up">88%</div>
-        <div class="ks">리그 9기 운영 중</div>
-      </div>
-      <div class="kpi">
-        <div class="kl">NOK/KRW 환율</div>
-        <div class="kv up">153.68</div>
-        <div class="ks">↑ 2026-03-13 · 52주 고점권</div>
-      </div>
-    </div>
-    <div class="stat-row">
-      <span class="chip">52주 고 <b class="up">45.20</b></span>
-      <span class="chip">52주 저 <b class="down">21.95</b></span>
-      <span class="chip">계약잔고 <b>28.3M USD</b></span>
-      <span class="chip">잔여월수 <b>4.03개월</b></span>
-      <span class="chip">활동 리그 <b>9기</b></span>
-      <span class="chip up">현재가 <b>45.20</b> = 52주 최고점 🔺</span>
-    </div>
+  <!-- KPI — JS로 자동 렌더링 -->
+  <div class="section" id="kpi-section">
+    <div class="sh"><span class="st">핵심 지표</span><span class="sm" id="kpi-date-sm">로딩중...</span></div>
+    <div class="kpi-grid" id="kpi-grid"></div>
+    <div class="stat-row" id="kpi-stat-row"></div>
   </div>
 
   <!-- 차트 1행: 주가 + 리그카운트 -->
   <div class="g2">
     <div class="section">
-      <div class="sh"><span class="st">NORAM 주가 추이 (NOK)</span><span class="sb warn">45.20</span></div>
+      <div class="sh"><span class="st">NORAM 주가 추이 (NOK)</span><span class="sb warn" id="sh-price">—</span></div>
       <div class="sbody"><div class="cw" style="height:210px"><canvas id="dash_price"></canvas></div></div>
     </div>
     <div class="section">
-      <div class="sh"><span class="st">Permian Rig Count</span><span class="sb bb">241</span></div>
+      <div class="sh"><span class="st">Permian Rig Count</span><span class="sb bb" id="sh-rig">—</span></div>
       <div class="sbody"><div class="cw" style="height:210px"><canvas id="dash_rig"></canvas></div></div>
     </div>
   </div>
@@ -281,11 +243,11 @@
   <!-- 차트 2행: Dayrate + 가동률 -->
   <div class="g2">
     <div class="section">
-      <div class="sh"><span class="st">Dayrate 추이 (USD/day)</span><span class="sb bb">$26,021</span></div>
+      <div class="sh"><span class="st">Dayrate 추이 (USD/day)</span><span class="sb bb" id="sh-dayrate">—</span></div>
       <div class="sbody"><div class="cw" style="height:210px"><canvas id="dash_dayrate"></canvas></div></div>
     </div>
     <div class="section">
-      <div class="sh"><span class="st">가동률 (Utilization %)</span><span class="sb bg">88%</span></div>
+      <div class="sh"><span class="st">가동률 (Utilization %)</span><span class="sb bg" id="sh-util">—</span></div>
       <div class="sbody"><div class="cw" style="height:210px"><canvas id="dash_util"></canvas></div></div>
     </div>
   </div>
@@ -1208,6 +1170,16 @@ const FX = [
   {d:'2026-03-13',r:153.68},
 ];
 
+// ═══════════════════════════════════════════
+// ★ 매주 여기만 업데이트 ★
+// ═══════════════════════════════════════════
+PRICE.push({d:'2026-03-20',c:44.40,h:46.00,l:43.05});
+RIG.push(  {d:'2026-03-20',t:243,h:225,dir:15,v:3});
+FX.push(   {d:'2026-03-20',r:157.40});
+// 운영지표는 월 1회: MONTHLY.push({ym:'2026-03',dr:???,util:???,rigs:???,backlog:???,months:???});
+// 배당은 월 1회:    DIVIDEND.push({ym:'2026-03',dps:???,usd:0.03,yRate:null});
+// ═══════════════════════════════════════════
+
 // FX 차트
 const fxLabels = dualLabel(FX.map(d=>d.d));
 const fxAvg = FX.reduce((s,d)=>s+d.r,0)/FX.length;
@@ -1243,6 +1215,98 @@ const fxtb = document.getElementById('fx_table');
 document.querySelectorAll('.kv').forEach(el => {
   if (el.textContent.trim() === '151.70') el.textContent = '153.68';
 });
+
+// ═══════════════════════════════════════════
+// KPI 자동 렌더링
+// ═══════════════════════════════════════════
+function renderKPI() {
+  const p  = PRICE[PRICE.length - 1];
+  const p1 = PRICE[PRICE.length - 2];
+  const r  = RIG[RIG.length - 1];
+  const r1 = RIG[RIG.length - 2];
+  const fx = FX[FX.length - 1];
+  const m  = MONTHLY[MONTHLY.length - 1];
+  const d  = DIVIDEND.filter(x=>x.dps).slice(-1)[0];
+
+  // 계산
+  const priceChg = ((p.c - p1.c) / p1.c * 100).toFixed(1);
+  const priceDir = p.c >= p1.c ? '↑' : '↓';
+  const priceCls = p.c >= p1.c ? 'up' : 'down';
+  const rigChg   = r.t - r1.t;
+  const rigDir   = rigChg >= 0 ? '↑' : '↓';
+  const rigCls   = rigChg >= 0 ? 'up' : 'down';
+  const latestDps = d ? d.dps : 0;
+  const yieldPct = (latestDps / p.c * 12 * 100).toFixed(2);
+  const fxChg    = fx.r - FX[FX.length - 2].r;
+  const fxDir    = fxChg >= 0 ? '↑' : '↓';
+  const fxCls    = fxChg >= 0 ? 'up' : 'down';
+
+  // 52주 고저
+  const w52 = PRICE.slice(-52);
+  const hi52 = Math.max(...w52.map(x=>x.c));
+  const lo52 = Math.min(...w52.map(x=>x.c));
+  const isHigh = p.c >= hi52;
+
+  // 날짜 표시
+  document.getElementById('kpi-date-tag').textContent = p.d + ' 기준';
+  document.getElementById('kpi-date-sm').textContent  = p.d + ' 주간 종가 기준';
+
+  // KPI 카드
+  document.getElementById('kpi-grid').innerHTML = `
+    <div class="kpi">
+      <div class="kl">NORAM 주가 (NOK)</div>
+      <div class="kv ${priceCls}">${p.c.toFixed(2)}</div>
+      <div class="ks">${priceDir} 전주 ${p1.c.toFixed(2)} 대비 ${priceChg > 0 ? '+' : ''}${priceChg}%</div>
+    </div>
+    <div class="kpi">
+      <div class="kl">배당수익률 (연, 현재가)</div>
+      <div class="kv ${parseFloat(yieldPct)>=10?'up':'warn'}">${yieldPct}%</div>
+      <div class="ks">월 ${latestDps.toFixed(3)} NOK ÷ ${p.c.toFixed(2)} × 12</div>
+    </div>
+    <div class="kpi">
+      <div class="kl">Permian Rig Count</div>
+      <div class="kv ${rigCls}">${r.t}</div>
+      <div class="ks">${rigDir} 전주 ${r1.t} · ${r.d}</div>
+    </div>
+    <div class="kpi">
+      <div class="kl">Dayrate (USD/day)</div>
+      <div class="kv neu">$${m.dr.toLocaleString()}</div>
+      <div class="ks">${m.ym} 기준</div>
+    </div>
+    <div class="kpi">
+      <div class="kl">가동률 (Utilization)</div>
+      <div class="kv up">${Math.round(m.util*100)}%</div>
+      <div class="ks">리그 ${m.rigs}기 운영 중</div>
+    </div>
+    <div class="kpi">
+      <div class="kl">NOK/KRW 환율</div>
+      <div class="kv ${fxCls}">${fx.r.toFixed(2)}</div>
+      <div class="ks">${fxDir} ${Math.abs(fxChg).toFixed(2)} · ${fx.d}</div>
+    </div>
+  `;
+
+  // stat-row
+  const hi52Chip = isHigh
+    ? `<span class="chip up">현재가 <b>${p.c.toFixed(2)}</b> = 52주 최고점 🔺</span>`
+    : `<span class="chip down">현재가 <b>${p.c.toFixed(2)}</b> vs 52주 고점 <b>${hi52.toFixed(2)}</b></span>`;
+
+  document.getElementById('kpi-stat-row').innerHTML = `
+    <span class="chip">52주 고 <b class="up">${hi52.toFixed(2)}</b></span>
+    <span class="chip">52주 저 <b class="down">${lo52.toFixed(2)}</b></span>
+    <span class="chip">계약잔고 <b>${m.backlog}M USD</b></span>
+    <span class="chip">잔여월수 <b>${m.months}개월</b></span>
+    <span class="chip">활동 리그 <b>${m.rigs}기</b></span>
+    ${hi52Chip}
+  `;
+
+  // 차트 섹션 헤더 뱃지
+  document.getElementById('sh-price').textContent   = `${p.c.toFixed(2)} NOK`;
+  document.getElementById('sh-rig').textContent     = `${r.t} rigs`;
+  document.getElementById('sh-dayrate').textContent = `$${m.dr.toLocaleString()}`;
+  document.getElementById('sh-util').textContent    = `${Math.round(m.util*100)}%`;
+}
+renderKPI();
+
 
 // ═══════════════════════════════════════════
 // NAVIGATION
